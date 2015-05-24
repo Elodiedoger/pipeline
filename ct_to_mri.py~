@@ -1,0 +1,76 @@
+
+# System import
+import numpy
+import os
+import subprocess
+import scipy.signal
+import glob
+import shutil
+
+# Plot import
+import matplotlib.pyplot as plt
+
+# IO import
+import nibabel
+
+def ct_to_mri(t1_nii, ct_nii, min_thr, output_dir, verbose=0):
+    """ Register the ct to the mri t1 of the patient.
+    """
+    # Output autocompletion
+    ct_modify_nii = os.path.join(output_dir, "ct_modify.nii.gz")
+    ct_brain_nii = os.path.join(output_dir, "ct_cut_brain.nii.gz")
+    register_ct_nii = os.path.join(output_dir, "cut_ct_to_t1.nii.gz")
+    transformation = os.path.join(output_dir, "cut_ct_to_t1.txt")
+    
+
+    # Load ct and modify the data for brain extraction
+    ct_im = nibabel.load(ct_nii)
+    ct_data = ct_im.get_data()
+    ct_shape = ct_data.shape
+    ct_data[numpy.where(ct_data < 0)] = 0
+    nibabel.save(ct_im, ct_modify_nii)
+
+    # Detect the neck
+    ct_im = nibabel.load(ct_modify_nii)
+    ct_data = ct_im.get_data()
+    power = numpy.sum(numpy.sum(ct_data, axis=0), axis=0)
+    powerfilter = scipy.signal.savgol_filter(power, window_length=11, polyorder=1)
+    mins = (numpy.diff(numpy.sign(numpy.diff(powerfilter))) > 0).nonzero()[0] + 1
+    global_min = numpy.inf
+    global_min_index = -1
+    for index in mins:
+        if powerfilter[index] > min_thr and global_min > powerfilter[index]:
+            global_min = powerfilter[index]
+            global_min_index = index
+
+    # Diplay if verbose mode
+    if verbose == 1:
+        x = range(power.shape[0])
+        plt.plot(x, power, '.', linewidth=1)
+        plt.plot(x, powerfilter, '--', linewidth=1)    
+        plt.plot(x[global_min_index], powerfilter[global_min_index], "o")       
+        plt.show()
+
+    # Cut the image
+    ct_cut_data = ct_data[:, :, range(global_min_index, ct_data.shape[2])]
+    brain_im = nibabel.Nifti1Image(ct_cut_data, ct_im.get_affine())
+    nibabel.save(brain_im, ct_brain_nii)
+
+    # Reorient ct brain image
+    ct_brain_init = reorient_image("LPS", output_dir)
+
+    # Register
+    cmd = ["flirt", "-cost", "normmi", "-omat", transformation, "-in", ct_brain_nii,
+           "-ref", t1_nii, "-out", register_ct_nii, "-init", ct_brain_init]
+    print "Executing: '{0}'.".format(" ".join(cmd))
+    subprocess.check_call(cmd)
+
+    
+    return transformation, ct_brain_nii, global_min_index
+
+if __name__ == "__main__":
+
+    analysis_path = '/media/mfpgt/MainDataDisk/Threads/collaboration_elodie/sub'
+    sujet_folder = 'sujet_005'
+    data_folder = 'dataset'
+    output_folder = 'results'

@@ -1,0 +1,43 @@
+
+# System import
+import numpy
+import os
+import subprocess
+import scipy.signal
+import glob
+import shutil
+
+# Plot import
+import matplotlib.pyplot as plt
+
+# IO import
+import nibabel
+
+def rd_to_atlas(rd_rescale_file, trans_nl, transformation, atlas_nii, output_dir) :
+    """Register the rd to the atlas"""
+
+    # Output autocompletion
+    combined_trans = os.path.join(output_dir, "combined_ct_to_atlas_field.nii.gz")
+    registered_labels_nii = os.path.join(output_dir, "cut_ct_to_atlas.nii.gz")
+
+    # Combine transformation
+    cmd = ["convertwarp", "--ref={0}".format(atlas_nii),
+           "--premat={0}".format(transformation), "--warp1={0}".format(trans_nl),
+           "--out={0}".format(combined_trans)]
+    print "Executing: '{0}'.".format(" ".join(cmd))
+    subprocess.check_call(cmd)
+
+    # Warp the labels
+    cmd = ["applywarp", "-i", rd_rescale_file, "-o", registered_labels_nii,
+           "-r", atlas_nii, "-w", combined_trans]
+    print "Executing: '{0}'.".format(" ".join(cmd))
+    subprocess.check_call(cmd)
+
+    return registered_labels_nii
+
+if __name__ == "__main__":
+
+    analysis_path = '/media/mfpgt/MainDataDisk/Threads/collaboration_elodie/sub'
+    sujet_folder = 'sujet_005'
+    data_folder = 'dataset'
+    output_folder = 'results'

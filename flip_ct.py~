@@ -1,0 +1,69 @@
+# System import
+import numpy
+import os
+import subprocess
+import scipy.signal
+import glob
+import shutil
+
+# Plot import
+import matplotlib.pyplot as plt
+
+# IO import
+import nibabel
+
+
+POSSIBLE_AXES_ORIENTATIONS = [
+    "LAI", "LIA", "ALI", "AIL", "ILA", "IAL",
+    "LAS", "LSA", "ALS", "ASL", "SLA", "SAL",
+    "LPI", "LIP", "PLI", "PIL", "ILP", "IPL",
+    "LPS", "LSP", "PLS", "PSL", "SLP", "SPL",
+    "RAI", "RIA", "ARI", "AIR", "IRA", "IAR",
+    "RAS", "RSA", "ARS", "ASR", "SRA", "SAR",
+    "RPI", "RIP", "PRI", "PIR", "IRP", "IPR",
+    "RPS", "RSP", "PRS", "PSR", "SRP", "SPR"]
+
+CORRECTION_MATRIX_COLUMNS = {
+    "R": (1, 0, 0),
+    "L": (-1, 0, 0),
+    "A": (0, 1, 0),
+    "P": (0, -1, 0),
+    "S": (0, 0, 1),
+    "I": (0, 0, -1)
+}
+
+def swap_affine(axes):
+    """ Build a correction matrix, from the given orientation
+    of axes to RAS.
+    """
+    rotation = numpy.eye(4)
+    rotation[:3, 0] = CORRECTION_MATRIX_COLUMNS[axes[0]]
+    rotation[:3, 1] = CORRECTION_MATRIX_COLUMNS[axes[1]]
+    rotation[:3, 2] = CORRECTION_MATRIX_COLUMNS[axes[2]]
+    return rotation
+
+
+def reorient_image(input_axes, output_dir):
+    """ Rectify the orientation of an image.
+    """
+    # get the transformation to the RAS space
+    rotation = swap_affine(input_axes)
+    det = numpy.linalg.det(rotation)
+    if det != 1:
+        raise Exception("Determinant must be equal to "
+                        "one got: {0}.".format(det))
+
+
+    # save result
+    reoriented_file = os.path.join(output_dir, "ct_mri_init.txt")
+    numpy.savetxt(reoriented_file, rotation)
+
+    return reoriented_file
+
+if __name__ == "__main__":
+
+    analysis_path = '/media/mfpgt/MainDataDisk/Threads/collaboration_elodie/sub'
+    sujet_folder = 'sujet_005'
+    data_folder = 'dataset'
+    output_folder = 'results'
+

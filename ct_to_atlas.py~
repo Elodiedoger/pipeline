@@ -1,0 +1,25 @@
+def ct_to_atlas(trans_nl, transformation, atlas_nii, ct_brain_nii,
+                 output_dir):
+    """ Register the CT to the template
+    """
+    # Output autocompletion
+    combined_trans = os.path.join(output_dir, "combined_ct_to_atlas_field.nii.gz")
+    registered_ct_nii = os.path.join(output_dir, "cut_ct_to_atlas.nii.gz") 
+    
+
+    # Combine transformation
+    cmd = ["convertwarp", "--ref={0}".format(atlas_nii), 
+           "--warp1={0}".format(trans_nl),"--premat={0}".format(transformation) ,
+           "--out={0}".format(combined_trans)]
+    print "Executing: '{0}'.".format(" ".join(cmd))
+    subprocess.check_call(cmd)
+
+    # Warp the ct
+    cmd = ["applywarp", "-i", ct_brain_nii, "-o", registered_ct_nii,
+           "-r", atlas_nii, "-w", combined_trans]
+    print "Executing: '{0}'.".format(" ".join(cmd))
+    subprocess.check_call(cmd)
+
+
+
+    return registered_ct_nii, combined_trans
