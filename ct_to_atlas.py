@@ -34,8 +34,7 @@ if __name__ == "__main__":
     output_dir = "/neurospin/grip/protocols/MRI/dosimetry_elodie_2015/voxel_to_voxel_ana/results/ct_to_atlas/sujet_005"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    print 'hola'
-    print 'holq'
+
     # Global Parameters
     analysis_path = '/neurospin/grip/protocols/MRI/dosimetry_elodie_2015/voxel_to_voxel_ana'
     data_folder = os.path.join(analysis_path, "dataset")
@@ -49,5 +48,5 @@ if __name__ == "__main__":
     trans_nl = os.path.join(analysis_path, "mri_to_atlas", "sujet_005",
                             "t1_to_atlas_nl_field.nii.gz")
 
-ct_cut_brain_to_atlas_nii, combined_trans = ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
+    ct_cut_brain_to_atlas_nii, combined_trans = ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
                  output_dir)
