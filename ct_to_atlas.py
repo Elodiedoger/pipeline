@@ -2,18 +2,12 @@
 # System import
 import os
 import subprocess
-import argparse as arg
+import argparse
 
 
 def ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
-                output_dir):
+                combined_trans, ct_cut_brain_to_atlas_nii):
     """ Register the CT to the template."""
-    # Output autocompletion
-    combined_trans = os.path.join(output_dir,
-                                  "combined_ct_to_atlas_field.nii.gz")
-    ct_cut_brain_to_atlas_nii = os.path.join(output_dir,
-                                             "cut_ct_to_atlas.nii.gz")
-
     # Combine transformation
     cmd = ["convertwarp", "--ref={0}".format(atlas_nii),
            "--warp1={0}".format(trans_nl), "--premat={0}".format(trans_2),
@@ -34,40 +28,44 @@ if __name__ == "__main__":
 
     # Create a commande line parsing
     parser = argparse.ArgumentParser(description='Run experimental design')
-    parser.add_argument('sub_id', action='store',type=str, help='sujet_id')
-    parser.add_argument('num', action='store',type=int, help='write a name')
-    print parser.parse_args()
+    parser.add_argument('-rdir',
+                        type=str,
+                        default=os.getcwd(),
+                        help='root directory that contains data folder')
+    parser.add_argument('subject_folder',
+                        type=str,
+                        help='name of the subject folder')
+    args = parser.parse_args()
 
-
-
-
-
-
-
-
-
-
-
-    # Create output directory
-    sub_id = os.getcwd+ "/" + str(object = sub_id)
-
-
-    output_dir = os.getcwd+ "/voxel_to_voxel_ana/results/ct_to_atlas".format(sub)
+    # For directory preparation
+    output_dir = os.path.join(args.rdir,
+                              'results',
+                              'ct_to_atlas',
+                              args.subject_folder)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
-    # Global Parameters
-    analysis_path = '/neurospin/grip/protocols/MRI/dosimetry_elodie_2015/voxel_to_voxel_ana'
-    data_folder = os.path.join(analysis_path, "dataset")
-    sujet_folder = os.path.join(data_folder, "sujet_005")
-    # Specific Parameters
-    atlas_nii = os.path.join(sujet_folder, "atlas", "atlas_t1.nii.gz")
-    ct_cut_brain_nii = os.path.join(analysis_path, "results", "ct_to_mri",
-                                    "sujet_005", "ct_cut_brain.nii.gz")
-    trans_2 = os.path.join(analysis_path, "results", "ct_to_mri", "sujet_005",
+    sujet_data_dir = os.path.join(args.rdir,
+                                  'dataset',
+                                  args.subject_folder)
+    # Setup input directories
+    atlas_nii = os.path.join(sujet_data_dir, "atlas", "atlas_t1.nii.gz")
+    ct_cut_brain_nii = os.path.join(args.rdir, "results", "ct_to_mri",
+                                    args.subject_folder, "ct_cut_brain.nii.gz")
+    trans_2 = os.path.join(args.rdir, "results", "ct_to_mri",
+                           args.subject_folder,
                            "trans_2.txt")
-    trans_nl = os.path.join(analysis_path, "mri_to_atlas", "sujet_005",
+    trans_nl = os.path.join(args.rdir, "mri_to_atlas", args.subject_folder,
                             "t1_to_atlas_nl_field.nii.gz")
-
-    ct_cut_brain_to_atlas_nii, combined_trans = ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
-                 output_dir)
+    # Setup output directories
+    combined_trans = os.path.join(output_dir,
+                                  "combined_ct_to_atlas_field.nii.gz")
+    ct_cut_brain_to_atlas_nii = os.path.join(output_dir,
+                                             "cut_ct_to_atlas.nii.gz")
+    # Run ct to atlas function
+    (ct_cut_brain_to_atlas_nii,
+     combined_trans) = ct_to_atlas(trans_nl,
+                                   trans_2,
+                                   atlas_nii,
+                                   ct_cut_brain_nii,
+                                   combined_trans,
+                                   ct_cut_brain_to_atlas_nii)
