@@ -2,6 +2,7 @@
 # System import
 import os
 import subprocess
+import argparse as arg
 
 
 def ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
@@ -30,8 +31,28 @@ def ct_to_atlas(trans_nl, trans_2, atlas_nii, ct_cut_brain_nii,
     return ct_cut_brain_to_atlas_nii, combined_trans
 
 if __name__ == "__main__":
+
+    # Create a commande line parsing
+    parser = argparse.ArgumentParser(description='Run experimental design')
+    parser.add_argument('sub_id', action='store',type=str, help='sujet_id')
+    parser.add_argument('num', action='store',type=int, help='write a name')
+    print parser.parse_args()
+
+
+
+
+
+
+
+
+
+
+
     # Create output directory
-    output_dir = "/neurospin/grip/protocols/MRI/dosimetry_elodie_2015/voxel_to_voxel_ana/results/ct_to_atlas/sujet_005"
+    sub_id = os.getcwd+ "/" + str(object = sub_id)
+
+
+    output_dir = os.getcwd+ "/voxel_to_voxel_ana/results/ct_to_atlas".format(sub)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
